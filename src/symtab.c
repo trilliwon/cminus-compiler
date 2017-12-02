@@ -13,6 +13,28 @@
 #include <string.h>
 #include "symtab.h"
 
+/* the list of line numbers of the source
+ * code in which a variable is referenced
+ */
+typedef struct LineListRec {
+  int lineno;
+  struct LineListRec * next;
+} * LineList;
+
+/* The record in the bucket lists for
+ * each variable, including name,
+ * assigned memory location, and
+ * the list of line numbers in which
+ * it appears in the source code
+ */
+typedef struct BucketListRec {
+  char * name;
+  ExpType type;
+  LineList lines;
+  int memloc ; /* memory location for variable */
+  struct BucketListRec * next;
+} * BucketList;
+
 /* SIZE is the size of the hash table */
 #define SIZE 211
 
