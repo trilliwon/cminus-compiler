@@ -13,9 +13,9 @@
 /* counter for variable memory locations */
 static int location = 0;
 
-/* Procedure traverse is a generic recursive 
+/* Procedure traverse is a generic recursive
  * syntax tree traversal routine:
- * it applies preProc in preorder and postProc 
+ * it applies preProc in preorder and postProc
  * in postorder to tree pointed to by t
  */
 static void traverse( TreeNode * t,
@@ -32,7 +32,7 @@ static void traverse( TreeNode * t,
   }
 }
 
-/* nullProc is a do-nothing procedure to 
+/* nullProc is a do-nothing procedure to
  * generate preorder-only or postorder-only
  * traversals from traverse
  */
@@ -41,75 +41,70 @@ static void nullProc(TreeNode * t)
   else return;
 }
 
-/* Procedure insertNode inserts 
- * identifiers stored in t into 
- * the symbol table 
+/* Procedure insertNode inserts
+ * identifiers stored in t into
+ * the symbol table
  */
 static void insertNode( TreeNode * t)
 { switch (t->nodekind)
-  { case StmtK:
+  { case StmtK: // IfK,WhileK,AssignK,CompoundK,ReturnK,CallK
       switch (t->kind.stmt)
       { case AssignK:
-        case ReadK:
-          if (st_lookup(t->attr.name) == -1)
-          /* not yet in table, so treat as new definition */
-            st_insert(t->attr.name,t->lineno,location++);
-          else
-          /* already in table, so ignore location, 
-             add line number of use only */ 
-            st_insert(t->attr.name,t->lineno,0);
           break;
         default:
           break;
       }
       break;
-    case ExpK:
+    case ExpK: // OpK,ConstK,IdK,TypeK,CalcK
       switch (t->kind.exp)
       { case IdK:
           if (st_lookup(t->attr.name) == -1)
           /* not yet in table, so treat as new definition */
             st_insert(t->attr.name,t->lineno,location++);
           else
-          /* already in table, so ignore location, 
-             add line number of use only */ 
+          /* already in table, so ignore location,
+             add line number of use only */
             st_insert(t->attr.name,t->lineno,0);
           break;
         default:
           break;
       }
       break;
+    case DeclK: // varK, funK, paramK
+      // TODO
+      switch (t->kind.exp) {
+
+      }
     default:
       break;
   }
 }
 
-/* Function buildSymtab constructs the symbol 
+/* Function buildSymtab constructs the symbol
  * table by preorder traversal of the syntax tree
  */
-void buildSymtab(TreeNode * syntaxTree)
-{ traverse(syntaxTree,insertNode,nullProc);
-  if (TraceAnalyze)
-  { fprintf(listing,"\nSymbol table:\n\n");
-    printSymTab(listing);
-  }
+void buildSymtab(TreeNode * syntaxTree) {
+   traverse(syntaxTree,insertNode,nullProc);
+   if (TraceAnalyze) {
+      fprintf(listing,"\nSymbol table:\n\n");
+      printSymTab(listing);
+    }
 }
 
-static void typeError(TreeNode * t, char * message)
-{ fprintf(listing,"Type error at line %d: %s\n",t->lineno,message);
-  Error = TRUE;
+static void typeError(TreeNode * t, char * message) {
+   fprintf(listing,"Type error at line %d: %s\n",t->lineno,message);
+   Error = TRUE;
 }
 
 /* Procedure checkNode performs
  * type checking at a single tree node
  */
-static void checkNode(TreeNode * t)
-{ switch (t->nodekind)
-  { case ExpK:
-      switch (t->kind.exp)
-      { case OpK:
-          if ((t->child[0]->type != Integer) ||
-              (t->child[1]->type != Integer))
-            typeError(t,"Op applied to non-integer");
+static void checkNode(TreeNode * t) {
+   switch (t->nodekind) {
+     case ExpK:
+       switch (t->kind.exp) {
+          case OpK:
+          if ((t->child[0]->type != Integer) || (t->child[1]->type != Integer)) typeError(t,"Op applied to non-integer");
           if ((t->attr.op == EQ) || (t->attr.op == LT))
             t->type = Boolean;
           else
@@ -151,7 +146,7 @@ static void checkNode(TreeNode * t)
   }
 }
 
-/* Procedure typeCheck performs type checking 
+/* Procedure typeCheck performs type checking
  * by a postorder syntax tree traversal
  */
 void typeCheck(TreeNode * syntaxTree)

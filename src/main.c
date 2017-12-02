@@ -13,7 +13,7 @@
 /* set NO_CODE to TRUE to get a compiler that does not
  * generate code
  */
-#define NO_CODE FALSE
+#define NO_CODE TRUE
 
 #include "util.h"
 #if NO_PARSE
@@ -43,21 +43,25 @@ int TraceCode = FALSE;
 
 int Error = FALSE;
 
-int main( int argc, char * argv[] )
-{ TreeNode * syntaxTree;
+int main( int argc, char * argv[] ) {
+  TreeNode * syntaxTree;
+
   char pgm[120]; /* source code file name */
-  if (argc != 2)
-    { fprintf(stderr,"usage: %s <filename>\n",argv[0]);
-      exit(1);
-    }
-  strcpy(pgm,argv[1]) ;
-  if (strchr (pgm, '.') == NULL)
-     strcat(pgm,".cm");
-  source = fopen(pgm,"r");
-  if (source==NULL)
-  { fprintf(stderr,"File %s not found\n",pgm);
+
+  if (argc != 2) {
+    fprintf(stderr,"usage: %s <filename>\n",argv[0]);
     exit(1);
   }
+
+  strcpy(pgm,argv[1]) ;
+  if (strchr (pgm, '.') == NULL) strcat(pgm,".cm");
+  source = fopen(pgm,"r");
+
+  if (source==NULL) {
+    fprintf(stderr,"File %s not found\n",pgm);
+    exit(1);
+  }
+
   listing = stdout; /* send listing to screen */
   lineno = 1;
 #if NO_PARSE
@@ -72,11 +76,15 @@ int main( int argc, char * argv[] )
     printTree(syntaxTree);
   }
 #if !NO_ANALYZE
-  if (! Error)
-  { if (TraceAnalyze) fprintf(listing,"\nBuilding Symbol Table...\n");
-    buildSymtab(syntaxTree);
-    if (TraceAnalyze) fprintf(listing,"\nChecking Types...\n");
-    typeCheck(syntaxTree);
+  if (! Error) {
+    if (TraceAnalyze){
+      fprintf(listing,"\nBuilding Symbol Table...\n");
+      buildSymtab(syntaxTree);
+    }
+    if (TraceAnalyze) {
+      fprintf(listing,"\nChecking Types...\n");
+      typeCheck(syntaxTree);
+    } 
     if (TraceAnalyze) fprintf(listing,"\nType Checking Finished\n");
   }
 #if !NO_CODE
