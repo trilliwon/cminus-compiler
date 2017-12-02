@@ -72,22 +72,25 @@ static ScopeList hashTable[SIZE];
  * loc = memory location is inserted only the
  * first time, otherwise ignored
  */
-void st_insert( char * scope, char * name, ExpType type, int lineno, int loc )
-{ int h = hash(name);
+void st_insert( char * scope, char * name, ExpType type, int lineno, int loc ) {
+  int h = hash(name);
   BucketList l =  hashTable[h];
-  while ((l != NULL) && (strcmp(name,l->name) != 0))
-    l = l->next;
-  if (l == NULL) /* variable not yet in table */
-  { l = (BucketList) malloc(sizeof(struct BucketListRec));
+  while ((l != NULL) && (strcmp(name,l->name) != 0)) l = l->next;
+
+  /* variable not yet in table */
+  if (l == NULL) {
+    l = (BucketList) malloc(sizeof(struct BucketListRec));
     l->name = name;
     l->lines = (LineList) malloc(sizeof(struct LineListRec));
     l->lines->lineno = lineno;
     l->memloc = loc;
     l->lines->next = NULL;
     l->next = hashTable[h];
-    hashTable[h] = l; }
-  else /* found in table, so just add line number */
-  { LineList t = l->lines;
+    hashTable[h] = l;
+  }
+  /* found in table, so just add line number */
+  else {
+    LineList t = l->lines;
     while (t->next != NULL) t = t->next;
     t->next = (LineList) malloc(sizeof(struct LineListRec));
     t->next->lineno = lineno;
@@ -98,11 +101,10 @@ void st_insert( char * scope, char * name, ExpType type, int lineno, int loc )
 /* Function st_lookup returns the memory
  * location of a variable or -1 if not found
  */
-BucketList st_lookup (char * scope, char * name)
-{ int h = hash(name);
+BucketList st_lookup (char * scope, char * name) {
+  int h = hash(name);
   BucketList l =  hashTable[h];
-  while ((l != NULL) && (strcmp(name,l->name) != 0))
-    l = l->next;
+  while ((l != NULL) && (strcmp(name,l->name) != 0)) l = l->next;
   if (l == NULL) return -1;
   else return l->memloc;
 }
@@ -111,21 +113,24 @@ BucketList st_lookup (char * scope, char * name)
  * listing of the symbol table contents
  * to the listing file
  */
-void printSymTab(FILE * listing)
-{ int i;
+void printSymTab(FILE * listing) {
+  int i;
   fprintf(listing,"Variable Name  Location   Line Numbers\n");
   fprintf(listing,"-------------  --------   ------------\n");
-  for (i=0;i<SIZE;++i)
-  { if (hashTable[i] != NULL)
-    { BucketList l = hashTable[i];
-      while (l != NULL)
-      { LineList t = l->lines;
+
+  for (i=0;i<SIZE;++i) {
+    if (hashTable[i] != NULL) {
+      BucketList l = hashTable[i];
+      while (l != NULL) {
+        LineList t = l->lines;
         fprintf(listing,"%-14s ",l->name);
         fprintf(listing,"%-8d  ",l->memloc);
-        while (t != NULL)
-        { fprintf(listing,"%4d ",t->lineno);
+
+        while (t != NULL) {
+          fprintf(listing,"%4d ",t->lineno);
           t = t->next;
         }
+
         fprintf(listing,"\n");
         l = l->next;
       }

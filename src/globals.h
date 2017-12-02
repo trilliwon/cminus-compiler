@@ -47,25 +47,35 @@ typedef enum { OpK, ConstK, IdK, TypeK, CalcK } ExpKind;
 typedef enum { varK, funK, paramK } DeclKind;
 
 /* ExpType is used for type checking */
-typedef enum {Void,Integer} ExpType;
+typedef enum { Void, Integer } ExpType;
 
 #define MAXCHILDREN 3
 
-typedef struct treeNode
-   { struct treeNode * child[MAXCHILDREN];
-     struct treeNode * sibling;
-     int lineno;
-     NodeKind nodekind;
-     union { StmtKind stmt; ExpKind exp; DeclKind decl;} kind;
-     union { TokenType op;
-       int val;
-       int idx;
-       char * name; } attr;
-     int paramnum;//for function
-     int array_size;
-     int scope;
-     ExpType type; /* for type checking of exps */
-   } TreeNode;
+typedef struct treeNode {
+
+  struct treeNode * child[MAXCHILDREN];
+  struct treeNode * sibling;
+  int lineno;
+  NodeKind nodekind;
+
+  union {
+    StmtKind stmt;
+    ExpKind exp;
+    DeclKind decl;
+  } kind;
+
+  union {
+    TokenType op;
+    int val;
+    int idx;
+    char * name;
+  } attr;
+
+  int paramnum;//for function
+  int array_size;
+  int scope;
+  ExpType type; /* for type checking of exps */
+} TreeNode;
 
 #define MAXSTACKSIZE 500
 #define STRINGSIZE 50
