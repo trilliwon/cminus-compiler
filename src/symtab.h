@@ -8,7 +8,7 @@
 
 #ifndef _SYMTAB_H_
 #define _SYMTAB_H_
-
+#include "globals.h"
 /* Procedure st_insert inserts line numbers and
  * memory locations into the symbol table
  * loc = memory location is inserted only the
