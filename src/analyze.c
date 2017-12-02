@@ -26,7 +26,7 @@ static void traverse(TreeNode * t, void (* preProc) (TreeNode *), void (* postPr
       for (i=0; i < MAXCHILDREN; i++) traverse(t->child[i],preProc,postProc);
     }
     postProc(t);
-    traverse(t->sibling,preProc,postProc)
+    traverse(t->sibling,preProc,postProc);
   }
 }
 
@@ -69,19 +69,19 @@ static void insertNode( TreeNode * t) {
           break;
         case ConstK:
           break;
-        case typeK:
-          break;
+        // case typeK:
+        //   break;
         case CalcK:
           break;
         case IdK:
-          if (st_lookup(t->attr.name) == -1) {
+          // if (st_lookup(t->attr.name) == -1) {
             /* not yet in table, so treat as new definition */
-            st_insert(t->attr.name,t->lineno,location++);
-          } else {
+            // st_insert(t->attr.name,t->lineno,location++);
+          // } else {
             /* already in table, so ignore location,
                add line number of use only */
-            st_insert(t->attr.name,t->lineno,0);
-          }
+            // st_insert(t->attr.name,t->lineno,0);
+          // }
           break;
         default:
           break;
@@ -129,14 +129,14 @@ static void checkNode(TreeNode * t) {
      case ExpK: // OpK,ConstK,IdK,TypeK,CalcK
        switch (t->kind.exp) {
           case OpK:
-          if ((t->child[0]->type != Integer) || (t->child[1]->type != Integer)) {
-            typeError(t,"Op applied to non-integer");
-          }
-          if ((t->attr.op == EQ) || (t->attr.op == LT)) {
-            t->type = Boolean;
-          } else {
-            t->type = Integer;
-          }
+            if ((t->child[0]->type != Integer) || (t->child[1]->type != Integer)) {
+              typeError(t,"Op applied to non-integer");
+            }
+            // if ((t->attr.op == EQ) || (t->attr.op == LT)) {
+            //   t->type = Boolean;
+            // } else {
+            //   t->type = Integer;
+            // }
           break;
         case ConstK:
         case IdK:
