@@ -61,9 +61,9 @@ static struct
 /* uses linear search */
 static TokenType reservedLookup (char * s)
 { int i;
-  for (i=0;i<MAXRESERVED;i++)
-  if (!strcmp(s,reservedWords[i].str))
-  return reservedWords[i].tok;
+  for (i=0;i<MAXRESERVED;i++) {
+    if (!strcmp(s,reservedWords[i].str)) return reservedWords[i].tok;
+  }
   return ID;
 }
 
@@ -102,9 +102,9 @@ TokenType getToken(void)
       { state = DONE;
         switch (c)
         { case EOF:
-          save = FALSE;
-          currentToken = ENDFILE;
-          break;
+            save = FALSE;
+            currentToken = ENDFILE;
+            break;
           case '+': currentToken = PLUS;     break;
           case '-': currentToken = MINUS;    break;
           case '*': currentToken = TIMES;    break;
@@ -122,78 +122,77 @@ TokenType getToken(void)
       break;
 
       case INNUM:
-
-      if (!isdigit(c))
-      { /* backup in the input */
-        ungetNextChar();
-        save = FALSE;
-        state = DONE;
-        currentToken = NUM;
-      }
-      break;
+        if (!isdigit(c))
+        { /* backup in the input */
+          ungetNextChar();
+          save = FALSE;
+          state = DONE;
+          currentToken = NUM;
+        }
+        break;
 
       case INID:
 
-      if (!isalpha(c))
-      { /* backup in the input */
-        ungetNextChar();
-        save = FALSE;
-        state = DONE;
-        currentToken = ID;
-      }
-      break;
+        if (!isalpha(c))
+        { /* backup in the input */
+          ungetNextChar();
+          save = FALSE;
+          state = DONE;
+          currentToken = ID;
+        }
+        break;
 
       case INLT: /* <, <= */
 
-      state = DONE;
-      if (c == '=') {
-        currentToken = LE;
-      } else {
-        /* backup in the input */
-        ungetNextChar();
-        save = FALSE;
-        currentToken = LT;
-      }
-      break;
+        state = DONE;
+        if (c == '=') {
+          currentToken = LE;
+        } else {
+          /* backup in the input */
+          ungetNextChar();
+          save = FALSE;
+          currentToken = LT;
+        }
+        break;
 
       case INGT: /* >, >= */
 
-      state = DONE;
-      if (c == '=') {
-        currentToken = GE;
-      } else {
-        /* backup in the input */
-        ungetNextChar();
-        save = FALSE;
-        currentToken = GT;
-      }
-      break;
+        state = DONE;
+        if (c == '=') {
+          currentToken = GE;
+        } else {
+          /* backup in the input */
+          ungetNextChar();
+          save = FALSE;
+          currentToken = GT;
+        }
+        break;
 
       case INNE: /* !=, only "!" does not exist */
 
-      state = DONE;
-      if (c == '=') {
-        currentToken = NE;
-      } else {
-        /* backup in the input */
-        ungetNextChar();
-        save = FALSE;
-        currentToken = ERROR;
-      }
-      break;
+        state = DONE;
+        if (c == '=') {
+          currentToken = NE;
+        } else {
+          /* backup in the input */
+          ungetNextChar();
+          save = FALSE;
+          currentToken = ERROR;
+        }
+        break;
 
       case INASSIGN:
 
-      state = DONE;
-      if (c == '=') {
-        currentToken = EQ;
-      } else {
-        /* backup in the input */
-        ungetNextChar();
-        save = FALSE;
-        currentToken = ASSIGN;
-      }
-      break;
+        state = DONE;
+        if (c == '=') {
+          currentToken = EQ;
+        } else {
+          /* backup in the input */
+          ungetNextChar();
+          save = FALSE;
+          currentToken = ASSIGN;
+        }
+        break;
 
       case INOVER:
         if (c == '*') {
@@ -229,12 +228,12 @@ TokenType getToken(void)
           state = INCOMMENT;
         }
         break;
-      case DONE: break;
+      case DONE:
       default: /* should never happen */
-      fprintf(listing,"Scanner Bug: state= %d\n",state);
-      state = DONE;
-      currentToken = ERROR;
-      break;
+        fprintf(listing,"Scanner Bug: state= %d\n",state);
+        state = DONE;
+        currentToken = ERROR;
+        break;
     }
 
     if ((save) && (tokenStringIndex <= MAXTOKENLEN)) {

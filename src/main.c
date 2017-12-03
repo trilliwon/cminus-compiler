@@ -1,6 +1,8 @@
 /****************************************************/
 /* File: main.c                                     */
-/* Main program for C- compiler                     */
+/* Main program for TINY compiler                   */
+/* Compiler Construction: Principles and Practice   */
+/* Kenneth C. Louden                                */
 /****************************************************/
 
 #include "globals.h"
@@ -59,7 +61,7 @@ int main( int argc, char * argv[] )
     exit(1);
   }
   listing = stdout; /* send listing to screen */
-  fprintf(listing,"\nC- COMPILATION: %s\n",pgm);
+  fprintf(listing,"\nTINY COMPILATION: %s\n",pgm);
 #if NO_PARSE
   while (getToken()!=ENDFILE);
 #else

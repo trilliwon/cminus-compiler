@@ -202,7 +202,7 @@ TreeNode * factor(void)
 /****************************************/
 /* the primary function of the parser   */
 /****************************************/
-/* Function parse returns the newly 
+/* Function parse returns the newly
  * constructed syntax tree
  */
 TreeNode * parse(void)
