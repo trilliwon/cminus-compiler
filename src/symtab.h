@@ -10,6 +10,9 @@
 #define _SYMTAB_H_
 #include "globals.h"
 
+/* SIZE is the size of the hash table */
+#define SIZE 211
+
 /* the list of line numbers of the source
  * code in which a variable is referenced
  */
@@ -38,6 +41,17 @@ typedef struct BucketListRec {
  * first time, otherwise ignored
  */
 void st_insert( char * scope, char * name, ExpType type, int lineno, int loc );
+
+/* The record for each scope
+including name, its bucket,
+and parent scope.
+ */
+typedef struct ScopeListRec {
+  char * name;
+  BucketList bucket[SIZE];
+  struct ScopeListRec *parent;
+  struct ScopeListRec *next;
+ } * ScopeList;
 
 /* Function st_lookup returns the memory
  * location of a variable or -1 if not found

@@ -13,9 +13,6 @@
 #include <string.h>
 #include "symtab.h"
 
-/* SIZE is the size of the hash table */
-#define SIZE 211
-
 /* SHIFT is the power of two used as multiplier
    in hash function  */
 #define SHIFT 4
@@ -31,19 +28,8 @@ static int hash ( char * key ) {
   return temp;
 }
 
-/* The record for each scope
-including name, its bucket,
-and parent scope.
- */
-typedef struct ScopeListRec {
-   char * name;
-   BucketList bucket[SIZE];
-   struct ScopeListRec *parent;
-   struct ScopeListRec *next;
- } * ScopeList;
-
 /* the hash table */
-static ScopeList hashTable[SIZE];
+static BucketList hashTable[SIZE];
 
 /* Procedure st_insert inserts line numbers and
  * memory locations into the symbol table

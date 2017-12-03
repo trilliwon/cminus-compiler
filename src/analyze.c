@@ -23,10 +23,12 @@ static void traverse(TreeNode * t, void (* preProc) (TreeNode *), void (* postPr
     preProc(t);
     {
       int i;
-      for (i=0; i < MAXCHILDREN; i++) traverse(t->child[i],preProc,postProc);
+      for (i=0; i < MAXCHILDREN; i++) {
+        traverse(t->child[i], preProc, postProc);
+      }
     }
     postProc(t);
-    traverse(t->sibling,preProc,postProc);
+    traverse(t->sibling, preProc, postProc);
   }
 }
 
@@ -107,7 +109,7 @@ static void insertNode( TreeNode * t) {
  * table by preorder traversal of the syntax tree
  */
 void buildSymtab(TreeNode * syntaxTree) {
-   traverse(syntaxTree,insertNode,nullProc);
+   traverse(syntaxTree, insertNode, nullProc);
    if (TraceAnalyze) {
       fprintf(listing,"\nSymbol table:\n\n");
       printSymTab(listing);
