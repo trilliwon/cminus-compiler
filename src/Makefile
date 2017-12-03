@@ -3,33 +3,37 @@
 # Gnu C Version
 #
 
-BISON = bison
-LEX = flex
 CC = gcc
 
-TARGET = cminus
-OBJS = main.o util.o cminus.tab.c lex.yy.c symtab.o analyze.o
+CFLAGS =
 
-$(TARGET): $(OBJS)
-	$(CC) -o $@ $(OBJS) -ly -ll
+OBJS = main.o util.o scan.o
 
-main.o: main.c globals.h util.h scan.h cminus.tab.h analyze.h
-	$(CC) -o $@ -c main.c
+OBJS_FLEX = lex.yy.o
 
-util.o: util.c util.h globals.h cminus.tab.h
-	$(CC) -o $@ -c util.c
+cminus: $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o cminus
 
-symtab.o: symtab.c symtab.h
-	$(CC) -o $@ -c symtab.c
+#by flex
+cminus_flex: $(OBJS_FLEX)
+	$(CC) $(CFLAGS) main.o util.o -o
 
-analyze.o: analyze.c analyze.h
-	$(CC) -o $@ -c analyze.c
+main.o: main.c globals.h util.h scan.h
+	$(CC) $(CFLAGS) -c main.c
 
-lex.yy.c: cminus.l globals.h util.h scan.h cminus.tab.h
-	$(LEX) -w cminus.l
+util.o: util.c util.h globals.h
+	$(CC) $(CFLAGS) -c util.c
 
-cminus.tab.h cminus.tab.c: cminus.y globals.h util.h scan.h
-	$(BISON) -d cminus.y
+scan.o: scan.c scan.h util.h globals.h
+	$(CC) $(CFLAGS) -c scan.c
+
+# lex.yy.o: cminus.l scan.h util.h globals.h
+# 	flex cminus.l
+# 	$(CC) $(CFLAGS) -c lex.yy.c -lfl
 
 clean:
-	rm -rf *.o lex.yy.c cminus cminus.tab.h cminus.tab.c cminus.output
+	-rm cminus
+	-rm $(OBJS)
+	-rm lex.yy.*
+
+all: cminus

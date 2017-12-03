@@ -14,10 +14,6 @@
 #include <ctype.h>
 #include <string.h>
 
-#ifndef YYPARSER
-#include "cminus.tab.h"
-#endif
-
 #ifndef FALSE
 #define FALSE 0
 #endif
@@ -27,9 +23,19 @@
 #endif
 
 /* MAXRESERVED = the number of reserved words */
-#define MAXRESERVED 8
+#define MAXRESERVED 6
 
-typedef int TokenType;
+typedef enum
+    /* book-keeping tokens */
+   {ENDFILE,ERROR,
+    /* C- reserved words */
+    ELSE, IF, INT, RETURN, VOID, WHILE,
+    /* multicharacter tokens */
+    ID,NUM,
+    /* special symbols */
+    PLUS, MINUS, TIMES, OVER, LT, LE, GT, GE, EQ, NE, ASSIGN,
+    SEMI, COMMA, LPAREN, RPAREN, LBRACKET, RBRACKET, LBRACE, RBRACE
+   } TokenType;
 
 extern FILE* source; /* source code text file */
 extern FILE* listing; /* listing output text file */
@@ -41,50 +47,26 @@ extern int lineno; /* source line number for listing */
 /***********   Syntax tree for parsing ************/
 /**************************************************/
 
-typedef enum { StmtK, ExpK, DeclK } NodeKind;
-typedef enum { IfK, WhileK, AssignK, CompoundK, ReturnK, CallK } StmtKind;
-typedef enum { OpK, ConstK, IdK, TypeK, CalcK } ExpKind;
-typedef enum { varK, funK, paramK } DeclKind;
+typedef enum {StmtK,ExpK} NodeKind;
+typedef enum {IfK,RepeatK,AssignK,ReadK,WriteK} StmtKind;
+typedef enum {OpK,ConstK,IdK} ExpKind;
 
 /* ExpType is used for type checking */
-typedef enum { Void, Integer } ExpType;
+typedef enum {Void,Integer,Boolean} ExpType;
 
 #define MAXCHILDREN 3
 
-typedef struct treeNode {
-
-  struct treeNode * child[MAXCHILDREN];
-  struct treeNode * sibling;
-  int lineno;
-  NodeKind nodekind;
-
-  union {
-    StmtKind stmt;
-    ExpKind exp;
-    DeclKind decl;
-  } kind;
-
-  union {
-    TokenType op;
-    int val;
-    int idx;
-    char * name;
-  } attr;
-
-  int paramnum;//for function
-  int array_size;
-  int scope;
-  ExpType type; /* for type checking of exps */
-} TreeNode;
-
-#define MAXSTACKSIZE 500
-#define STRINGSIZE 50
-
-static char stack[MAXSTACKSIZE][STRINGSIZE];
-static int top = 0;
-
-static int depth = 0;
-ExpType return_type;
+typedef struct treeNode
+   { struct treeNode * child[MAXCHILDREN];
+     struct treeNode * sibling;
+     int lineno;
+     NodeKind nodekind;
+     union { StmtKind stmt; ExpKind exp;} kind;
+     union { TokenType op;
+             int val;
+             char * name; } attr;
+     ExpType type; /* for type checking of exps */
+   } TreeNode;
 
 /**************************************************/
 /***********   Flags for tracing       ************/
