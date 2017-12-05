@@ -27,7 +27,7 @@ $ ./cminus gcd.cm
     - [ ] traverse(),
     - [ ] ... , scope and type concept
   - Modify the checkNode() function to check the semantics of C-Minus
-  - Insert built-in function
+  - [x] Insert built-in function
     - Input(), output()
 
 
