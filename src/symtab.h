@@ -32,6 +32,7 @@ typedef struct BucketListRec {
      char * name;
      ExpType type;
      LineList lines;
+     TreeNode *treeNode;
      int memloc ; /* memory location for variable */
      struct BucketListRec * next;
    } * BucketList;
@@ -39,26 +40,33 @@ typedef struct BucketListRec {
 /* the hash table */
 typedef struct ScopeListRec {
    char * name;
-   BucketList bucket[SIZE];
+   int nestedLevel;
    struct ScopeListRec *parent;
- } * ScopeListRec;
+   BucketList hashTable[SIZE]; /* the hash table */
+ } * Scope;
 
-/* the hash table */
-static BucketList hashTable[SIZE];
+Scope globalScope;
 
 /* Procedure st_insert inserts line numbers and
  * memory locations into the symbol table
  * loc = memory location is inserted only the
  * first time, otherwise ignored
  */
-void st_insert( char * scope, char * name, ExpType type, int lineno, int loc );
+void st_insert( char * name, int lineno, int loc, TreeNode * treeNode );
 
 /* Function st_lookup returns the memory
  * location of a variable or -1 if not found
  */
-BucketList st_lookup (char * scope, char * name);
+ int st_lookup ( char * name );
+ int st_add_lineno(char * name, int lineno);
+ BucketList st_bucket( char * name );
+ int st_lookup_top (char * name);
 
-BucketList st_lookup_excluding_parent( char * scope, char * name);
+ Scope sc_create(char *funcName);
+ Scope sc_top( void );
+ void sc_pop( void );
+ void sc_push( Scope scope );
+ int addLocation( void );
 
 /* Procedure printSymTab prints a formatted
  * listing of the symbol table contents
