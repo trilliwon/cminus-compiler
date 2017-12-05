@@ -17,10 +17,10 @@
 /* the list of line numbers of the source
  * code in which a variable is referenced
  */
-typedef struct LineListRec
-   { int lineno;
-     struct LineListRec * next;
-   } * LineList;
+typedef struct LineListRec {
+  int lineno;
+  struct LineListRec * next;
+} * LineList;
 
 /* The record in the bucket lists for
  * each variable, including name,
@@ -29,21 +29,21 @@ typedef struct LineListRec
  * it appears in the source code
  */
 typedef struct BucketListRec {
-     char * name;
-     ExpType type;
-     LineList lines;
-     TreeNode *treeNode;
-     int memloc ; /* memory location for variable */
-     struct BucketListRec * next;
-   } * BucketList;
+  char * name;
+  ExpType type;
+  LineList lines;
+  TreeNode *treeNode;
+  int memloc ; /* memory location for variable */
+  struct BucketListRec * next;
+} * BucketList;
 
-/* the hash table */
+/* Scope */
 typedef struct ScopeListRec {
-   char * name;
-   int nestedLevel;
-   struct ScopeListRec *parent;
-   BucketList hashTable[SIZE]; /* the hash table */
- } * Scope;
+  char * name;
+  int nestedLevel;
+  struct ScopeListRec *parent;
+  BucketList hashTable[SIZE]; /* the hash table */
+} * Scope;
 
 Scope globalScope;
 

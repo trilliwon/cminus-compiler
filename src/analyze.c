@@ -106,7 +106,7 @@ static void nullProc(TreeNode * t) {
  * identifiers stored in t into
  * the symbol table
  */
- static void insertNode( TreeNode * t) {
+ static void insertNode(TreeNode * t) {
    switch (t->nodekind) {
      case StmtK:
        switch (t->kind.stmt) {
@@ -404,7 +404,6 @@ void buildSymtab(TreeNode * syntaxTree) {
   sc_pop();
 
   if (TraceAnalyze) {
-    fprintf(listing,"\nSymbol table:\n\n");
     printSymTab(listing);
   }
 }
@@ -414,6 +413,6 @@ void buildSymtab(TreeNode * syntaxTree) {
  */
 void typeCheck(TreeNode * syntaxTree) {
   sc_push(globalScope);
-  traverse(syntaxTree,beforeCheckNode,checkNode);
+  traverse(syntaxTree, beforeCheckNode, checkNode);
   sc_pop();
 }
