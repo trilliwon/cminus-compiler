@@ -38,7 +38,7 @@ static void insertInputFunc(void) {
   fun_declaration->child[2] = compound_stmt;
 
   /* Insert input function*/
-  st_insert("input", 0, addLocation(), fun_declaration);
+  st_insert("", "input", Integer, 0, 0, fun_declaration);
 }
 
 /* To insert to symbol table build-in functions
@@ -69,7 +69,7 @@ static void insertOutputFunc(void) {
   fun_declaration->child[2] = compound_stmt;
 
   /* Insert output function*/
-  st_insert("output", 0, addLocation(), fun_declaration);
+  st_insert("", "output", Integer, 0, 0, fun_declaration);
 }
 
 /* Procedure traverse is a generic recursive
@@ -114,10 +114,10 @@ static void nullProc(TreeNode * t) {
            if (preserveLastScope) {
              preserveLastScope = FALSE;
            } else {
-             Scope scope = sc_create(funcName);
-             sc_push(scope);
+             Scope scope = newScope(funcName);
+             pushScope(scope);
            }
-           t->attr.scope = sc_top();
+           t->attr.scope = topInScopeList();
            break;
          default:
            break;
@@ -149,8 +149,9 @@ static void nullProc(TreeNode * t) {
              symbolError(t,"function already declared");
              break;
            }
-           st_insert(funcName, t->lineno, addLocation(), t);
-           sc_push(sc_create(funcName));
+
+           st_insert(funcName, funcName, t->type, t->lineno, addLocation(), t);
+           pushScope(newScope(funcName));
            preserveLastScope = TRUE;
            switch (t->child[0]->attr.type){
              case INT:
@@ -179,8 +180,7 @@ static void nullProc(TreeNode * t) {
                // t->type = IntegerArray;
              }
 
-             if (st_lookup_top(name) < 0)
-               st_insert(name,t->lineno,addLocation(),t);
+             if (st_lookup_top(name) < 0) st_insert(name, name, t->type, t->lineno, 0, t);
              else
                symbolError(t,"symbol already declared for current scope");
            }
@@ -189,7 +189,7 @@ static void nullProc(TreeNode * t) {
            if (t->child[0]->attr.type == VOID)
              symbolError(t->child[0],"void type parameter is not allowed");
            if (st_lookup(t->attr.name) == -1) {
-             st_insert(t->attr.name, t->lineno, addLocation(), t);
+             st_insert(t->attr.name, t->attr.name, t->type, t->lineno, 0, t);
              if (t->kind.decl == ParamK)  t->type = Integer;
              else symbolError(t,"symbol already declared for current scope");
            }
@@ -208,7 +208,7 @@ static void nullProc(TreeNode * t) {
      case StmtK:
       switch (t->kind.stmt) {
         case CompoundK:
-          sc_pop();
+          popScope();
           break;
         default:
           break;
@@ -238,7 +238,7 @@ static void beforeCheckNode(TreeNode * t) {
     case StmtK:
       switch (t->kind.stmt) {
         case CompoundK:
-          sc_push(t->attr.scope);
+          pushScope(t->attr.scope);
           break;
         default:
           break;
@@ -265,7 +265,7 @@ static void checkNode(TreeNode * t) {
          // else t->type = t->child[0]->type;
          break;
         case CompoundK:
-          sc_pop();
+          popScope();
           break;
         case WhileK:
          if (t->child[0]->type == Void)
@@ -396,12 +396,12 @@ static void checkNode(TreeNode * t) {
 * table by preorder traversal of the syntax tree
 */
 void buildSymtab(TreeNode * syntaxTree) {
-  globalScope = sc_create(NULL);
-  sc_push(globalScope);
+  globalScope = newScope(NULL);
+  pushScope(globalScope);
   insertInputFunc();
   insertOutputFunc();
   // traverse(syntaxTree, insertNode, afterInsertNode);
-  sc_pop();
+  popScope();
 
   if (TraceAnalyze) {
     printSymTab(listing);
@@ -412,7 +412,7 @@ void buildSymtab(TreeNode * syntaxTree) {
  * by a postorder syntax tree traversal
  */
 void typeCheck(TreeNode * syntaxTree) {
-  sc_push(globalScope);
+  pushScope(globalScope);
   traverse(syntaxTree, beforeCheckNode, checkNode);
-  sc_pop();
+  popScope();
 }

@@ -95,6 +95,7 @@ var_declaration : type_specifier id SEMI
                   { $$ = newDeclNode(ArrVarK);
                     $$->child[0] = $1;
                     $$->lineno = lineno;
+                    $$->type = IntegerArray;
                     $$->attr.arr.name = savedName;
                     $$->attr.arr.size = savedNumber;
                   }

@@ -48,7 +48,7 @@ typedef enum { OpK, ConstK, IdK, TypeK, ArrIdK, CallK, CalcK } ExpKind;
 typedef enum { VarK, FunK, ArrVarK, ArrParamK, ParamK } DeclKind;
 
 /* ExpType is used for type checking */
-typedef enum { Void, Integer } ExpType;
+typedef enum { Void, Integer, IntegerArray } ExpType;
 
 #define MAXCHILDREN 3
 
@@ -78,7 +78,7 @@ typedef struct treeNode {
    int val;
    char * name;
    ArrAttr arr;
-   struct ScopeListRec * scope; 
+   struct ScopeListRec * scope;
   } attr;
 
   ExpType type; /* for type checking of exps */

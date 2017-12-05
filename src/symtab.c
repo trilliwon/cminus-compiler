@@ -18,7 +18,7 @@
 #define SHIFT 4
 
 /* the hash function */
-static int hash ( char * key ) {
+static int hash(char * key) {
   int temp = 0;
   int i = 0;
   while (key[i] != '\0') {
@@ -28,55 +28,48 @@ static int hash ( char * key ) {
   return temp;
 }
 
+/*
+ * Scope List
+ */
 static Scope scopeList[SIZE];
-static int nScope = 0;
-
+static int numOfScope = 0;
 static int location[SIZE];
 
-/* Scope stack declaration
-sc_top();
-sc_pop();
-sc_push();
-*/
-static Scope scopeStack[SIZE];
-static int nScopeStack = 0;
-
-Scope sc_top(void) {
-  return scopeStack[nScopeStack - 1];
+Scope newScope(char * scopeName) {
+  Scope newScope;
+  newScope = (Scope) malloc(sizeof(struct ScopeListRec));
+  newScope->name = scopeName;
+  newScope->nestedLevel = numOfScope;
+  newScope->parent = topInScopeList();
+  scopeList[numOfScope++] = newScope;
+  return newScope;
 }
 
-// TODO
-void sc_pop(void) {
-  nScopeStack--;
+Scope topInScopeList(void) {
+  return scopeList[numOfScope - 1];
 }
 
-void sc_push( Scope scope ) {
-  scopeStack[nScopeStack] = scope;
-  location[nScopeStack++] = 0;
+void popScope(void) {
+  numOfScope--;
+}
+
+void pushScope(Scope scope) {
+  scopeList[numOfScope] = scope;
+  location[numOfScope++] = 0;
 }
 
 int addLocation(void) {
-  return location[nScopeStack - 1]++;
-}
-
-Scope sc_create(char * scope) {
-  Scope newScope;
-  newScope = (Scope) malloc(sizeof(struct ScopeListRec));
-  newScope->name = scope;
-  newScope->nestedLevel = nScopeStack;
-  newScope->parent = sc_top();
-  scopeList[nScope++] = newScope;
-  return newScope;
+  return location[numOfScope - 1]++;
 }
 
 /* Bucket Stack
 BucketList st_bucket(char * name);
-void st_insert(char * name, int lineno, int loc, TreeNode * treeNode);
+void st_insert(char * scope, char * name, ExpType type, int lineno, int loc);
 int st_lookup (char * name)
 */
 BucketList st_bucket(char * name) {
   int h = hash(name);
-  Scope sc = sc_top();
+  Scope sc = topInScopeList();
 
   while(sc) {
     BucketList l = sc->hashTable[h];
@@ -92,26 +85,33 @@ BucketList st_bucket(char * name) {
  * loc = memory location is inserted only the
  * first time, otherwise ignored
  */
-void st_insert(char * name, int lineno, int loc, TreeNode * treeNode) {
+void st_insert(char * scope, char * name, ExpType type, int lineno, int loc, TreeNode * treeNode) {
   int h = hash(name);
-  Scope top = sc_top();
-  BucketList l =  top->hashTable[h];
+  Scope top = topInScopeList();
+  BucketList l = top->hashTable[h];
 
+  /* Move to last node finding the same name until last BucketList */
   while ((l != NULL) && (strcmp(name, l->name) != 0)) l = l->next;
 
-  /* variable not yet in table */
+  /* variable not yet in BucketList */
   if (l == NULL) {
     l = (BucketList) malloc(sizeof(struct BucketListRec));
     l->name = name;
+    l->type = type;
     l->treeNode = treeNode;
     l->lines = (LineList) malloc(sizeof(struct LineListRec));
     l->lines->lineno = lineno;
     l->memloc = loc;
     l->lines->next = NULL;
     l->next = top->hashTable[h];
-    top->hashTable[h] = l; }
-  else {
-    // ERROR!
+    top->hashTable[h] = l;
+  } else {
+    /* already exist in the BucketList */
+    LineList t = l->lines;
+    while (t->next != NULL) t = t->next;
+    t->next = (LineList) malloc(sizeof(struct LineListRec));
+    t->next->lineno = lineno;
+    t->next->next = NULL;
   }
 } /* st_insert */
 
@@ -126,7 +126,7 @@ int st_lookup (char * name) {
 
 int st_lookup_top (char * name) {
   int h = hash(name);
-  Scope sc = sc_top();
+  Scope sc = topInScopeList();
 
   while(sc) {
     BucketList l = sc->hashTable[h];
@@ -220,7 +220,7 @@ void printSymTab(FILE * listing) {
   fprintf(listing, "|  Symbol table  |");
   fprintf(listing, "\n------------------\n\n");
 
-  for (int i = 0; i<nScope; ++i) {
+  for (int i = 0; i<numOfScope; ++i) {
 
     Scope scope = scopeList[i];
     BucketList * hashTable = scope->hashTable;
