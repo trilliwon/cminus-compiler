@@ -145,10 +145,10 @@ void printTree( TreeNode * tree )
 { int i;
   INDENT;
   while (tree != NULL) {
-    printSpaces();
 
     // IfK, WhileK, CompoundK, ReturnK
     if (tree->nodekind==StmtK) {
+      printSpaces();
       switch (tree->kind.stmt) {
         case IfK:
           fprintf(listing,"If\n");
@@ -172,6 +172,7 @@ void printTree( TreeNode * tree )
     }
     // OpK, ConstK, AssignK, IdK, TypeK, ArrIdK, CallK, CalK
     else if (tree->nodekind==ExpK) {
+      if (tree->kind.exp != TypeK) printSpaces();
       switch (tree->kind.exp) {
         case OpK:
           fprintf(listing,"Op: ");
@@ -192,7 +193,8 @@ void printTree( TreeNode * tree )
           fprintf(listing, "Call Function : %s\n", tree->attr.name);
           break;
         case CalcK:
-          fprintf(listing, "Calculation : %s\n", tree->attr.name);
+          fprintf(listing, "Operator : ");
+          printToken(tree->child[1]->attr.op, "\0");
           break;
         default:
           fprintf(listing,"Unknown ExpNode kind\n");
@@ -201,6 +203,7 @@ void printTree( TreeNode * tree )
     }
     // VarK, FunK, ArrVarK, ArrParamK, ParamK
     else if (tree->nodekind==DeclK) {
+      printSpaces();
       switch (tree->kind.decl) {
         case FunK :
           fprintf(listing, "Function Declaration:  ");
@@ -223,7 +226,8 @@ void printTree( TreeNode * tree )
         case ParamK :
           fprintf(listing, "Parameter: ");
           printTypes(tree);
-          fprintf(listing, " %s\n", tree->attr.name);
+          if (tree->attr.name != NULL) fprintf(listing, " %s\n", tree->attr.name);
+          fprintf(listing, " void\n");
           break;
         default:
           fprintf(listing, "Unknown Declaration\n");
@@ -231,11 +235,7 @@ void printTree( TreeNode * tree )
         }
       }
     else fprintf(listing,"Unknown node kind\n");
-    for (i=0;i<MAXCHILDREN;i++) {
-      if (tree->child[i] != NULL) {
-        printTree(tree->child[i]);
-      }
-    }
+    for (i=0;i<MAXCHILDREN;i++) if (tree->child[i] != NULL) printTree(tree->child[i]);
     tree = tree->sibling;
   }
   UNINDENT;
