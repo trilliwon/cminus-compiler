@@ -226,8 +226,11 @@ void printTree( TreeNode * tree )
         case ParamK :
           fprintf(listing, "Parameter: ");
           printTypes(tree);
-          if (tree->attr.name != NULL) fprintf(listing, " %s\n", tree->attr.name);
-          fprintf(listing, " void\n");
+          if (tree->attr.name != NULL) {
+            fprintf(listing, " %s\n", tree->attr.name);
+          } else {
+            fprintf(listing, " void\n");
+          }
           break;
         default:
           fprintf(listing, "Unknown Declaration\n");
