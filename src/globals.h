@@ -15,7 +15,7 @@
 #include <string.h>
 
 #ifndef YYPARSER
-#include "y.tab.h"
+#include "cminus.tab.h"
 #define ENDFILE 0
 #endif
 
@@ -42,31 +42,45 @@ extern int lineno; /* source line number for listing */
 /***********   Syntax tree for parsing ************/
 /**************************************************/
 
-typedef enum {StmtK,ExpK,DeclK} NodeKind;
-typedef enum {IfK,WhileK,AssignK,CompoundK,ReturnK,CallK} StmtKind;
-typedef enum {OpK,ConstK,IdK,TypeK,CalcK} ExpKind;
-typedef enum {varK, funK, paramK} DeclKind;
+typedef enum { StmtK, ExpK, DeclK } NodeKind;
+typedef enum { IfK, WhileK, AssignK, CompoundK, ReturnK } StmtKind;
+typedef enum { OpK, ConstK, IdK, TypeK, ArrIdK, CallK, CalcK } ExpKind;
+typedef enum { VarK, FunK, ArrVarK, ArrParamK, ParamK } DeclKind;
 
 /* ExpType is used for type checking */
-typedef enum {Void,Integer} ExpType;
+typedef enum { Void, Integer } ExpType;
+
+/* ArrayAttr is used for attributes for array variables */
+typedef struct arrayAttr {
+    TokenType type;
+    char * name;
+    int size;
+} ArrayAttr;
 
 #define MAXCHILDREN 3
 
-typedef struct treeNode
-   { struct treeNode * child[MAXCHILDREN];
-     struct treeNode * sibling;
-     int lineno;
-     NodeKind nodekind;
-     union { StmtKind stmt; ExpKind exp; DeclKind decl;} kind;
-     union { TokenType op;
-       int val;
-       int idx;
-       char * name; } attr;
-     int paramnum;//for function
-     int array_size;
-     int scope;
-     ExpType type; /* for type checking of exps */
-   } TreeNode;
+typedef struct treeNode {
+  struct treeNode * child[MAXCHILDREN];
+  struct treeNode * sibling;
+  int lineno;
+  NodeKind nodekind;
+
+  union {
+   StmtKind stmt;
+   ExpKind exp;
+   DeclKind decl;
+  } kind;
+
+  union {
+   TokenType op;
+   TokenType type;
+   int val;
+   char * name;
+   ArrayAttr arr;
+  } attr;
+
+  ExpType type; /* for type checking of exps */
+} TreeNode;
 
 /**************************************************/
 /***********   Flags for tracing       ************/
