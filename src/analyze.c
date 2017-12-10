@@ -12,13 +12,12 @@
 #include "util.h"
 
 /* counter for variable memory locations */
-static int location = 0;
 static char * funcName;
-static int preserveLastScope = FALSE;
 
-/* To insert to symbol table build-in functions
-int input()   // One integer value is input from the user.
-void output() // Prints the value of arg.
+/*
+ * To insert to symbol table build-in functions
+ * int input()   // One integer value is input from the user.
+ * void output() // Prints the value of arg.
  */
 static void insertInputFunc(void) {
   TreeNode * fun_declaration = newDeclNode(FunK);
@@ -38,12 +37,12 @@ static void insertInputFunc(void) {
   fun_declaration->child[2] = compound_stmt;
 
   /* Insert input function*/
-  st_insert("", "input", Integer, 0, 0, fun_declaration);
+  st_insert("global", "input", fun_declaration, 0, 0);
 }
 
 /* To insert to symbol table build-in functions
-int input()   // One integer value is input from the user.
-void output() // Prints the value of arg.
+ * int input()   // One integer value is input from the user.
+ * void output() // Prints the value of arg.
  */
 static void insertOutputFunc(void) {
 
@@ -69,7 +68,7 @@ static void insertOutputFunc(void) {
   fun_declaration->child[2] = compound_stmt;
 
   /* Insert output function*/
-  st_insert("", "output", Integer, 0, 0, fun_declaration);
+  st_insert("global", "output", fun_declaration, 0, 0);
 }
 
 /* Procedure traverse is a generic recursive
@@ -88,11 +87,6 @@ static void traverse(TreeNode * t, void (* preProc) (TreeNode *), void (* postPr
   }
 }
 
-static void symbolError(TreeNode * t, char * message) {
-  fprintf(listing,"Symbol error at line %d: %s\n", t->lineno, message);
-  Error = TRUE;
-}
-
 /* nullProc is a do-nothing procedure to
  * generate preorder-only or postorder-only
  * traversals from traverse
@@ -102,150 +96,62 @@ static void nullProc(TreeNode * t) {
   else return;
 }
 
+static void symbolError(TreeNode * t, char * message) {
+  fprintf(listing,"Symbol error at line %d: %s\n", t->lineno, message);
+  Error = TRUE;
+}
+
 /* Procedure insertNode inserts
  * identifiers stored in t into
  * the symbol table
+ * { StmtK, ExpK, DeclK }
  */
- static void insertNode(TreeNode * t) {
-   switch (t->nodekind) {
-     case StmtK:
-       switch (t->kind.stmt) {
-         case CompoundK:
-           if (preserveLastScope) {
-             preserveLastScope = FALSE;
-           } else {
-             Scope scope = newScope(funcName);
-             pushScope(scope);
-           }
-           t->attr.scope = topInScopeList();
-           break;
-         default:
-           break;
-       }
-       break;
-     case ExpK:
-       switch (t->kind.exp){
-         case IdK:
-         case ArrIdK:
-         case CallK:
-           if (st_lookup(t->attr.name) == -1)
-           /* not yet in table, error */
-             symbolError(t, "undelcared symbol");
-           else
-           /* already in table, so ignore location,
-              add line number of use only */
-             st_add_lineno(t->attr.name,t->lineno);
-           break;
-         default:
-           break;
-       }
-       break;
-     case DeclK:
-       switch (t->kind.decl) {
-         case FunK:
-           funcName = t->attr.name;
-           if (st_lookup_top(funcName) >= 0) {
-           /* already in table, so it's an error */
-             symbolError(t,"function already declared");
-             break;
-           }
-
-           st_insert(funcName, funcName, t->type, t->lineno, addLocation(), t);
-           pushScope(newScope(funcName));
-           preserveLastScope = TRUE;
-           switch (t->child[0]->attr.type){
-             case INT:
-               t->type = Integer;
-               break;
-             case VOID:
-             default:
-               t->type = Void;
-               break;
-           }
-           break;
-         case VarK:
-         case ArrVarK:
-           {
-             char *name;
-             if (t->child[0]->attr.type == VOID) {
-               symbolError(t,"variable should have non-void type");
-               break;
-             }
-
-             if (t->kind.decl == VarK) {
-               name = t->attr.name;
-               t->type = Integer;
-             } else {
-               name = t->attr.arr.name;
-               // t->type = IntegerArray;
-             }
-
-             if (st_lookup_top(name) < 0) st_insert(name, name, t->type, t->lineno, 0, t);
-             else
-               symbolError(t,"symbol already declared for current scope");
-           }
-           break;
-         case ParamK:
-           if (t->child[0]->attr.type == VOID)
-             symbolError(t->child[0],"void type parameter is not allowed");
-           if (st_lookup(t->attr.name) == -1) {
-             st_insert(t->attr.name, t->attr.name, t->type, t->lineno, 0, t);
-             if (t->kind.decl == ParamK)  t->type = Integer;
-             else symbolError(t,"symbol already declared for current scope");
-           }
-           break;
-         default:
-           break;
-       }
-       break;
-     default:
-       break;
-   }
- }
-
- static void afterInsertNode( TreeNode * t ) {
-   switch (t->nodekind) {
-     case StmtK:
-      switch (t->kind.stmt) {
-        case CompoundK:
-          popScope();
-          break;
+static void insertNode(TreeNode * t) {
+  switch (t->nodekind) {
+    case StmtK: {
+      if (t->kind.stmt == CompoundK) {
+        Scope scope = newScope(funcName);
+        pushScope(scope);
+        fprintf(listing, "insertNode() was called at %s: %d. info %s, line: %d\n", __FILE__, __LINE__, scope->name, t->lineno);
+        t->attr.scope = currScope();
+      }
+      break;
+    }
+    case ExpK: {
+      // TODO
+      break;
+    }
+    case DeclK: {
+      switch (t->kind.decl) {
+        case FunK:
+          {
+            funcName = t->attr.name;
+            Scope scope = newScope(funcName);
+            fprintf(listing, "DeclK was called at %s: %d.  line: %d\n", __FILE__, __LINE__, t->lineno);
+            switch (t->child[0]->attr.type) {
+              case INT:
+                t->type = Integer;
+                break;
+              case VOID:
+              default:
+                t->type = Void;
+                break;
+              }
+              break;
+          }
         default:
           break;
-     }
-     break;
+      }
+      break;
+    }
     default:
-     break;
+      break;
    }
  }
 
 static void typeError(TreeNode * t, char * message) {
   fprintf(listing,"Type error at line %d: %s\n",t->lineno,message);
   Error = TRUE;
-}
-
-static void beforeCheckNode(TreeNode * t) {
-  switch (t->nodekind) {
-    case DeclK:
-      switch (t->kind.decl) {
-        case FunK:
-          funcName = t->attr.name;
-          break;
-        default:
-          break;
-      }
-      break;
-    case StmtK:
-      switch (t->kind.stmt) {
-        case CompoundK:
-          pushScope(t->attr.scope);
-          break;
-        default:
-          break;
-      }
-    default:
-      break;
-  }
 }
 
 /* Procedure checkNode performs
@@ -274,7 +180,7 @@ static void checkNode(TreeNode * t) {
          break;
         case ReturnK:
           {
-            const TreeNode * funcDecl = st_bucket(funcName)->treeNode;
+            const TreeNode * funcDecl;
             const ExpType funcType = funcDecl->type;
             const TreeNode * expr = t->child[0];
 
@@ -320,11 +226,10 @@ static void checkNode(TreeNode * t) {
          case ArrIdK:
            {
              const char *symbolName = t->attr.name;
-             const BucketList bucket = st_bucket(symbolName);
+             const BucketList bucket;
              TreeNode *symbolDecl = NULL;
 
              if (bucket == NULL) break;
-             symbolDecl = bucket->treeNode;
 
              if (t->kind.exp == ArrIdK) {
                if (symbolDecl->kind.decl != ArrVarK && symbolDecl->kind.decl != ArrParamK) {
@@ -342,7 +247,7 @@ static void checkNode(TreeNode * t) {
          case CallK:
            {
              const char *callingFuncName = t->attr.name;
-             const TreeNode * funcDecl = st_bucket(callingFuncName)->treeNode;
+             const TreeNode * funcDecl;
              TreeNode *arg;
              TreeNode *param;
 
@@ -392,27 +297,29 @@ static void checkNode(TreeNode * t) {
    }
  }
 
+
+
+/* Procedure typeCheck performs type checking
+* by a postorder syntax tree traversal
+*/
+void typeCheck(TreeNode * syntaxTree) {
+  // traverse(syntaxTree, nullProc, checkNode);
+  // popScope();
+}
+
 /* Function buildSymtab constructs the symbol
 * table by preorder traversal of the syntax tree
 */
 void buildSymtab(TreeNode * syntaxTree) {
-  globalScope = newScope(NULL);
+
+  // insert global scope
+  globalScope = newScope("global");
   pushScope(globalScope);
   insertInputFunc();
   insertOutputFunc();
-  // traverse(syntaxTree, insertNode, afterInsertNode);
-  popScope();
-
+  traverse(syntaxTree, insertNode, nullProc);
+  fprintf(listing, "buildSymtab() was called at %s: %d. info %s\n", __FILE__, __LINE__, globalScope->name);
   if (TraceAnalyze) {
     printSymTab(listing);
   }
-}
-
-/* Procedure typeCheck performs type checking
- * by a postorder syntax tree traversal
- */
-void typeCheck(TreeNode * syntaxTree) {
-  pushScope(globalScope);
-  traverse(syntaxTree, beforeCheckNode, checkNode);
-  popScope();
 }

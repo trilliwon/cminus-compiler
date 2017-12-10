@@ -30,51 +30,54 @@ typedef struct LineListRec {
 */
 typedef struct BucketListRec {
   char * name;
-  ExpType type;
-  LineList lines;
   TreeNode * treeNode;
+  LineList lines;
   int memloc; /* memory location for variable */
   struct BucketListRec * next;
 } * BucketList;
 
-/* Scope */
+/* Scope List */
 typedef struct ScopeListRec {
-  char * name;
+  char * name; // function name
   int nestedLevel;
   struct ScopeListRec *parent;
   BucketList hashTable[SIZE]; /* the hash table */
 } * Scope;
 
+/*
+* Scope
+*/
 Scope globalScope;
+
+static Scope scopeList[SIZE];
+static int topScope = -1;
+static int location[SIZE]; // TODO
+
+Scope newScope(char * scopeName);
+void popScope(void);
+void pushScope(Scope scope);
 
 /* Procedure st_insert inserts line numbers and
 * memory locations into the symbol table
 * loc = memory location is inserted only the
 * first time, otherwise ignored
 */
-void st_insert(char * scope, char * name, ExpType type, int lineno, int loc, TreeNode * treeNode);
-
-/* Function st_lookup returns the memory
-* location of a variable or -1 if not found
-*/
-int st_lookup(char * name);
-int st_add_lineno(char * name, int lineno);
-BucketList st_bucket(char * name);
-int st_lookup_top(char * name);
+void st_insert(char * scopeName, char * name, TreeNode * treeNode, int lineno, int loc);
 
 /*
-* Scope list funtion declarations
-*/
-Scope newScope(char * scopeName);
-Scope topInScopeList(void);
-void popScope(void);
-void pushScope(Scope scope);
-int addLocation(void);
+ * Current Scope
+ */
+Scope currScope();
+/*
+ * Function st_lookup returns the BucketList or NULL if not found
+ */
+BucketList st_lookup(char * scopeName, char * name);
+BucketList st_bucket(char * name);
 
 /* Procedure printSymTab prints a formatted
-* listing of the symbol table contents
-* to the listing file
-*/
+ * listing of the symbol table contents
+ * to the listing file
+ */
 void printSymTab(FILE * listing);
 
 #endif
