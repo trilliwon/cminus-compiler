@@ -41,10 +41,16 @@ Scope newScope(char * scopeName) {
 
 void popScope(void) {
   // TODO free memory
-  topScope--;
+  fprintf(listing, "popScope(void) was called.\n");
+  // topScope--;
 }
 
 void pushScope(Scope scope) {
+  for (int i=0; i<=topScope; i++) {
+    if (strcmp(scopeList[i]->name, scope->name) == 0) {
+      scope->nestedLevel++;
+    }
+  }
   topScope++;
   scopeList[topScope] = scope;
 }
@@ -60,15 +66,15 @@ Scope currScope() {
  */
 void st_insert( char * scopeName,
                 char * name,
+                ExpType type,
                 TreeNode * treeNode,
-                int lineno,
                 int loc ) {
 
   int h = hash(name);
-
-
+  // fprintf(listing, "st_insert %s, %s\n", scopeName, name);
   BucketList l;
   Scope currScope;
+
   for (int i=0; i<=topScope; i++) {
     currScope = scopeList[topScope];
     l = currScope->hashTable[h];;
@@ -83,7 +89,8 @@ void st_insert( char * scopeName,
     l->name = name;
     l->treeNode = treeNode;
     l->lines = (LineList) malloc(sizeof(struct LineListRec));
-    l->lines->lineno = lineno;
+    l->lines->lineno = treeNode->lineno;
+    l->type = type;
     l->memloc = loc;
     l->lines->next = NULL;
     l->next = currScope->hashTable[h];
@@ -120,6 +127,21 @@ BucketList st_lookup(char * scopeName, char * name) {
   while ((bucket != NULL) && (strcmp(name, bucket->name) != 0)) bucket = bucket->next;
   return bucket;
 }
+
+/* Function st_lookup returns Bucket
+ * location of a variable or NULL if not found
+ */
+Scope st_lookup_scope(char * scopeName) {
+  Scope scope = NULL;
+  for (int i=0; i<=topScope; i++) {
+    if (strcmp(scopeList[i]->name, scopeName) == 0) {
+      scope = scopeList[i];
+      break;
+    }
+  }
+  return scope;
+}
+
 
 void printSymbolTableRows(BucketList *hashTable, FILE *listing) {
 
@@ -160,12 +182,15 @@ void printSymbolTableRows(BucketList *hashTable, FILE *listing) {
           break;
         }
 
-        switch (node->type) {
+        switch (l->type) {
           case Void:
-            fprintf(listing, "Void        ");
+            fprintf(listing, "Void          ");
             break;
           case Integer:
-            fprintf(listing, "Integer     ");
+            fprintf(listing, "Integer       ");
+            break;
+          case IntegerArray:
+            fprintf(listing, "Integer Array ");
             break;
           default:
             break;
@@ -192,41 +217,22 @@ void printSymbolTableRows(BucketList *hashTable, FILE *listing) {
  * to the listing file
  */
 void printSymTab(FILE * listing) {
-  fprintf(listing, "printSymTab\n");
 
   fprintf(listing, "\n------------------\n");
   fprintf(listing, "|  Symbol table  |");
   fprintf(listing, "\n------------------\n\n");
 
-  for (int i = 0; i<topScope; ++i) {
+  for (int i = 0; i<=topScope; ++i) {
 
     Scope scope = scopeList[i];
     BucketList * hashTable = scope->hashTable;
-    fprintf(listing, "Scope : %s\n", scope->name);
+    fprintf(listing, "Scope Name : %s, Nested Level: %d\n", scope->name, scope->nestedLevel);
     fprintf(listing, "------------------------------------------------------------------\n");
-    fprintf(listing, "Name       Type             Data Type   Location   Line Numbers   \n");
-    fprintf(listing, "---------  ---------------  ----------  ---------  ---------------\n");
+    fprintf(listing, "Name       Type             Data Type     Location   Line Numbers \n");
+    fprintf(listing, "---------  ---------------  ------------  ---------  -------------\n");
     printSymbolTableRows(hashTable, listing);
     fprintf(listing, "------------------------------------------------------------------\n");
 
     fputc('\n', listing);
   }
 } /* printSymTab */
-
-/* Bucket Stack
- * BucketList st_bucket(char * name);
- * void st_insert(char * scope, char * name, ExpType type, int lineno, int loc);
- * int st_lookup (char * name)
- */
-BucketList st_bucket(char * name) {
-  int h = hash(name);
-  Scope currScope = scopeList[topScope];
-
-  while(currScope) {
-    BucketList l;
-    while ((l != NULL) && (strcmp(name,l->name) != 0)) l = l->next;
-    if (l != NULL) return l;
-    currScope = currScope->parent;
-  }
-  return NULL;
-}

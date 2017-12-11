@@ -34,6 +34,7 @@ typedef struct BucketListRec {
   LineList lines;
   int memloc; /* memory location for variable */
   struct BucketListRec * next;
+  ExpType type;
 } * BucketList;
 
 /* Scope List */
@@ -49,7 +50,12 @@ typedef struct ScopeListRec {
 */
 Scope globalScope;
 
+/* Scope List to output */
 static Scope scopeList[SIZE];
+
+/* Stack to deal with scope */
+static Scope scopeStack[SIZE];
+
 static int topScope = -1;
 static int location[SIZE]; // TODO
 
@@ -62,7 +68,7 @@ void pushScope(Scope scope);
 * loc = memory location is inserted only the
 * first time, otherwise ignored
 */
-void st_insert(char * scopeName, char * name, TreeNode * treeNode, int lineno, int loc);
+void st_insert(char * scopeName, char * name, ExpType type, TreeNode * treeNode, int loc);
 
 /*
  * Current Scope
@@ -72,7 +78,7 @@ Scope currScope();
  * Function st_lookup returns the BucketList or NULL if not found
  */
 BucketList st_lookup(char * scopeName, char * name);
-BucketList st_bucket(char * name);
+Scope st_lookup_scope(char * scopeName);
 
 /* Procedure printSymTab prints a formatted
  * listing of the symbol table contents

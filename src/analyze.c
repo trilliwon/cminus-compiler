@@ -11,9 +11,6 @@
 #include "analyze.h"
 #include "util.h"
 
-/* counter for variable memory locations */
-static char * funcName;
-
 /*
  * To insert to symbol table build-in functions
  * int input()   // One integer value is input from the user.
@@ -37,7 +34,7 @@ static void insertInputFunc(void) {
   fun_declaration->child[2] = compound_stmt;
 
   /* Insert input function*/
-  st_insert("global", "input", fun_declaration, 0, 0);
+  st_insert("global", "input", Integer, fun_declaration, 0);
 }
 
 /* To insert to symbol table build-in functions
@@ -68,7 +65,7 @@ static void insertOutputFunc(void) {
   fun_declaration->child[2] = compound_stmt;
 
   /* Insert output function*/
-  st_insert("global", "output", fun_declaration, 0, 0);
+  st_insert("global", "output", Void, fun_declaration, 0);
 }
 
 /* Procedure traverse is a generic recursive
@@ -97,9 +94,12 @@ static void nullProc(TreeNode * t) {
 }
 
 static void symbolError(TreeNode * t, char * message) {
-  fprintf(listing,"Symbol error at line %d: %s\n", t->lineno, message);
+  fprintf(listing,"Symbol Table error at line %d: %s\n", t->lineno, message);
   Error = TRUE;
 }
+
+/* */
+static char * funcName;
 
 /* Procedure insertNode inserts
  * identifiers stored in t into
@@ -107,38 +107,108 @@ static void symbolError(TreeNode * t, char * message) {
  * { StmtK, ExpK, DeclK }
  */
 static void insertNode(TreeNode * t) {
+
   switch (t->nodekind) {
+    /*
+     * Statement Key
+     */
     case StmtK: {
-      if (t->kind.stmt == CompoundK) {
-        Scope scope = newScope(funcName);
-        pushScope(scope);
-        fprintf(listing, "insertNode() was called at %s: %d. info %s, line: %d\n", __FILE__, __LINE__, scope->name, t->lineno);
-        t->attr.scope = currScope();
+      switch (t->kind.stmt) {
+        case CompoundK: {
+          //TODO nested level
+          popScope();
+          break;
+        }
+        default:
+          break;
       }
       break;
     }
-    case ExpK: {
-      // TODO
-      break;
-    }
+
+    /*
+     * Declaration Key
+     */
     case DeclK: {
       switch (t->kind.decl) {
-        case FunK:
-          {
-            funcName = t->attr.name;
-            Scope scope = newScope(funcName);
-            fprintf(listing, "DeclK was called at %s: %d.  line: %d\n", __FILE__, __LINE__, t->lineno);
-            switch (t->child[0]->attr.type) {
-              case INT:
-                t->type = Integer;
-                break;
-              case VOID:
-              default:
-                t->type = Void;
-                break;
-              }
-              break;
+        case FunK: {
+
+          /* Look up scope list to check scope existence */
+          funcName = t->attr.name;
+          if (st_lookup_scope(funcName) != NULL) {
+            symbolError(t, "Redefinition of function");
+            break;
           }
+
+          Scope scope = newScope(funcName);
+          pushScope(scope);
+          fprintf(listing, "FunK: [%s: %d] - [name : %s, lineno: %d]\n", __FILE__, __LINE__, currScope()->name, t->lineno);
+          break;
+        }
+
+        case VarK: {
+
+          /* Look up to check variable existence */
+          if (st_lookup(currScope()->name, t->attr.name) != NULL) {
+            symbolError(t, "Redefinition of variable");
+            break;
+          }
+
+          if (t->child[0]->type == Void) {
+            symbolError(t, "Variable should not be void type.");
+            break;
+          }
+
+          st_insert(currScope()->name, t->attr.name, t->child[0]->type, t, 0);
+          break;
+        }
+
+        case ArrVarK: {
+
+          if (t->child[0]->type == Void) {
+            symbolError(t, "Redefinition of Array variable");
+            break;
+          }
+
+          /*  Look up to check array variable existence  */
+          if (st_lookup(currScope()->name, t->attr.arr.name) != NULL) {
+            symbolError(t, "Array Variable has already declared.");
+            break;
+          }
+
+          st_insert(currScope()->name, t->attr.arr.name, t->child[0]->type, t, 0);
+          break;
+        }
+
+        case ArrParamK: {
+
+          if (t->child[0]->type == Void) {
+            symbolError(t, "Array Parameter should not be void type.");
+            break;
+          }
+
+          /*  Look up to check array parameter existence  */
+          if (st_lookup(currScope()->name, t->attr.name) != NULL) {
+            symbolError(t, "Redefinition of Array Parameter");
+            break;
+          }
+
+          st_insert(currScope()->name, t->attr.name, t->child[0]->type, t, 0);
+          break;
+        }
+
+        case ParamK: {
+
+          if (t->attr.name != NULL) {
+            /*  Look up to check parameter existence  */
+            if (st_lookup(currScope()->name, t->attr.name) != NULL) {
+              symbolError(t, "Redefinition of Parameter");
+              break;
+            }
+
+            st_insert(currScope()->name, t->attr.name, t->child[0]->type, t, 0);
+          }
+          break;
+        }
         default:
           break;
       }
@@ -311,14 +381,12 @@ void typeCheck(TreeNode * syntaxTree) {
 * table by preorder traversal of the syntax tree
 */
 void buildSymtab(TreeNode * syntaxTree) {
-
   // insert global scope
   globalScope = newScope("global");
   pushScope(globalScope);
   insertInputFunc();
   insertOutputFunc();
   traverse(syntaxTree, insertNode, nullProc);
-  fprintf(listing, "buildSymtab() was called at %s: %d. info %s\n", __FILE__, __LINE__, globalScope->name);
   if (TraceAnalyze) {
     printSymTab(listing);
   }
