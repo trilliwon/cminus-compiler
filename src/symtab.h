@@ -45,23 +45,21 @@ typedef struct ScopeListRec {
   BucketList hashTable[SIZE]; /* the hash table */
 } * Scope;
 
-/*
-* Scope
-*/
+// global scope to cover function definitions
 Scope globalScope;
 
 /* Scope List to output */
 static Scope scopeList[SIZE];
+static int sizeOfList = 0;
 
 /* Stack to deal with scope */
 static Scope scopeStack[SIZE];
-
-static int topScope = -1;
-static int location[SIZE]; // TODO
+static int topScope = 0;
 
 Scope newScope(char * scopeName);
 void popScope(void);
 void pushScope(Scope scope);
+void insertScopeToList(Scope scope);
 
 /* Procedure st_insert inserts line numbers and
 * memory locations into the symbol table
@@ -70,15 +68,16 @@ void pushScope(Scope scope);
 */
 void st_insert(char * scopeName, char * name, ExpType type, TreeNode * treeNode, int loc);
 
-/*
- * Current Scope
- */
+// return current scope
 Scope currScope();
 /*
  * Function st_lookup returns the BucketList or NULL if not found
  */
-BucketList st_lookup(char * scopeName, char * name);
+BucketList st_lookup(char * name);
+
 Scope st_lookup_scope(char * scopeName);
+BucketList st_lookup_all_scope(char * name);
+void insertLines(char* name, int lineno);
 
 /* Procedure printSymTab prints a formatted
  * listing of the symbol table contents

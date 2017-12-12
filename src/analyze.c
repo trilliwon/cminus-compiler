@@ -11,6 +11,10 @@
 #include "analyze.h"
 #include "util.h"
 
+typedef int bool;
+#define true 1
+#define false 0
+
 /*
  * To insert to symbol table build-in functions
  * int input()   // One integer value is input from the user.
@@ -34,7 +38,7 @@ static void insertInputFunc(void) {
   fun_declaration->child[2] = compound_stmt;
 
   /* Insert input function*/
-  st_insert("global", "input", Integer, fun_declaration, 0);
+  st_insert("global", "input", Integer, fun_declaration, 1);
 }
 
 /* To insert to symbol table build-in functions
@@ -89,6 +93,13 @@ static void traverse(TreeNode * t, void (* preProc) (TreeNode *), void (* postPr
  * traversals from traverse
  */
 static void nullProc(TreeNode * t) {
+
+  if (t->nodekind == StmtK) {
+    if (t->kind.stmt == CompoundK) {
+      popScope();
+    }
+  }
+
   if (t==NULL) return;
   else return;
 }
@@ -96,18 +107,18 @@ static void nullProc(TreeNode * t) {
 static void symbolError(TreeNode * t, char * message) {
   fprintf(listing,"Symbol Table error at line %d: %s\n", t->lineno, message);
   Error = TRUE;
+  exit(-1);
 }
 
-/* */
-static char * funcName;
+// this is needed to check parameters
+static bool isFirstCompoundK = false;
+static int locationCounter = 0;
 
 /* Procedure insertNode inserts
  * identifiers stored in t into
  * the symbol table
- * { StmtK, ExpK, DeclK }
  */
 static void insertNode(TreeNode * t) {
-
   switch (t->nodekind) {
     /*
      * Statement Key
@@ -115,9 +126,36 @@ static void insertNode(TreeNode * t) {
     case StmtK: {
       switch (t->kind.stmt) {
         case CompoundK: {
-          //TODO nested level
-          popScope();
+          if (!isFirstCompoundK) {
+            Scope scope = newScope(currScope()->name);
+            scope->parent = currScope();
+            pushScope(scope);
+          }
+          isFirstCompoundK = false;
           break;
+        }
+        default:
+          break;
+      }
+      break;
+    }
+
+    /*
+    *
+    * OpK, ConstK, IdK, TypeK, ArrIdK, CallK, CalcK } ExpKind;
+    */
+    case ExpK: {
+      switch (t->kind.exp){
+        case IdK:
+        case ArrIdK:
+        case CallK: {
+          // check undeclation
+          if (st_lookup_all_scope(t->attr.name) == NULL){
+            fprintf(listing,"Symbol Table error  %s\n", t->attr.name);
+            symbolError(t, "Undefined Symbol");
+          } else {
+            insertLines(t->attr.name, t->lineno);
+          }
         }
         default:
           break;
@@ -131,24 +169,30 @@ static void insertNode(TreeNode * t) {
     case DeclK: {
       switch (t->kind.decl) {
         case FunK: {
+          // initialize location counter
+          locationCounter = 0;
 
           /* Look up scope list to check scope existence */
-          funcName = t->attr.name;
-          if (st_lookup_scope(funcName) != NULL) {
+          if (st_lookup_scope(t->attr.name) != NULL) {
             symbolError(t, "Redefinition of function");
             break;
           }
 
-          Scope scope = newScope(funcName);
+          if (strcmp(currScope()->name, "global") == 0) {
+            st_insert(currScope()->name, t->attr.name, t->child[0]->type, t, locationCounter++);
+          }
+
+          Scope scope = newScope(t->attr.name);
+          scope->parent = currScope();
           pushScope(scope);
-          fprintf(listing, "FunK: [%s: %d] - [name : %s, lineno: %d]\n", __FILE__, __LINE__, currScope()->name, t->lineno);
+          isFirstCompoundK = true;
           break;
         }
 
         case VarK: {
 
           /* Look up to check variable existence */
-          if (st_lookup(currScope()->name, t->attr.name) != NULL) {
+          if (st_lookup(t->attr.name) != NULL) {
             symbolError(t, "Redefinition of variable");
             break;
           }
@@ -158,7 +202,7 @@ static void insertNode(TreeNode * t) {
             break;
           }
 
-          st_insert(currScope()->name, t->attr.name, t->child[0]->type, t, 0);
+          st_insert(currScope()->name, t->attr.name, t->child[0]->type, t, locationCounter++);
           break;
         }
 
@@ -170,12 +214,12 @@ static void insertNode(TreeNode * t) {
           }
 
           /*  Look up to check array variable existence  */
-          if (st_lookup(currScope()->name, t->attr.arr.name) != NULL) {
+          if (st_lookup(t->attr.arr.name) != NULL) {
             symbolError(t, "Array Variable has already declared.");
             break;
           }
 
-          st_insert(currScope()->name, t->attr.arr.name, t->child[0]->type, t, 0);
+          st_insert(currScope()->name, t->attr.arr.name, t->child[0]->type, t, locationCounter++);
           break;
         }
 
@@ -187,12 +231,12 @@ static void insertNode(TreeNode * t) {
           }
 
           /*  Look up to check array parameter existence  */
-          if (st_lookup(currScope()->name, t->attr.name) != NULL) {
+          if (st_lookup(t->attr.name) != NULL) {
             symbolError(t, "Redefinition of Array Parameter");
             break;
           }
 
-          st_insert(currScope()->name, t->attr.name, t->child[0]->type, t, 0);
+          st_insert(currScope()->name, t->attr.name, t->child[0]->type, t, locationCounter++);
           break;
         }
 
@@ -200,12 +244,12 @@ static void insertNode(TreeNode * t) {
 
           if (t->attr.name != NULL) {
             /*  Look up to check parameter existence  */
-            if (st_lookup(currScope()->name, t->attr.name) != NULL) {
+            if (st_lookup(t->attr.name) != NULL) {
               symbolError(t, "Redefinition of Parameter");
               break;
             }
 
-            st_insert(currScope()->name, t->attr.name, t->child[0]->type, t, 0);
+            st_insert(currScope()->name, t->attr.name, t->child[0]->type, t, locationCounter++);
           }
           break;
         }
@@ -222,6 +266,7 @@ static void insertNode(TreeNode * t) {
 static void typeError(TreeNode * t, char * message) {
   fprintf(listing,"Type error at line %d: %s\n",t->lineno,message);
   Error = TRUE;
+  exit(-1);
 }
 
 /* Procedure checkNode performs
@@ -231,133 +276,49 @@ static void checkNode(TreeNode * t) {
   switch (t->nodekind) {
     case StmtK:
       switch (t->kind.stmt) {
-        case AssignK:
-         // if (t->child[0]->type == IntegerArray)
-         //  /* no value can be assigned to array variable */
-         //  typeError(t->child[0],"assignment to array variable");
-         // else if (t->child[1]->type == Void)
-         //   /* r-value cannot have void type */
-         //   typeError(t->child[0],"assignment of void value");
-         // else t->type = t->child[0]->type;
-         break;
-        case CompoundK:
-          popScope();
-          break;
-        case WhileK:
-         if (t->child[0]->type == Void)
-         /* while test should be void function call */
-           typeError(t->child[0],"while test has void value");
-         break;
-        case ReturnK:
-          {
-            const TreeNode * funcDecl;
-            const ExpType funcType = funcDecl->type;
-            const TreeNode * expr = t->child[0];
+        case AssignK: {
+          // Verify the type match of two operands when assigning.
+          if (t->child[0]->attr.arr.type == IntegerArray) {
+            typeError(t->child[0], "Assignment to Integer Array Variable");
+          }
 
-            if (funcType == Void && (expr != NULL && expr->type != Void)) {
-               typeError(t,"expected no return value");
-               //ValueReturned = TRUE;
-             } else if (funcType == Integer && (expr == NULL || expr->type == Void)) {
-               typeError(t,"expected return value");
-             }
+          if (t->child[0]->attr.type == Void) {
+            typeError(t->child[0], "Assignment to Void Variable");
+          }
+          break;
+        }
+        case ReturnK: {
+          const TreeNode * funcDecl;
+          const ExpType funcType = funcDecl->type;
+          const TreeNode * expr = t->child[0];
+
+          if (funcType == Void && (expr != NULL && expr->type != Void)) {
+             typeError(t,"expected no return value");
+           } else if (funcType == Integer && (expr == NULL || expr->type == Void)) {
+             typeError(t,"expected return value");
            }
-           break;
-         default:
-           break;
+        }
+        default:
+          break;
        }
        break;
      case ExpK:
        switch (t->kind.exp) {
-         case OpK:
-           {
-             ExpType leftType, rightType;
-             TokenType op;
-
-             leftType = t->child[0]->type;
-             rightType = t->child[1]->type;
-             op = t->attr.op;
-
-             /*if (leftType == Void || rightType == Void)
-               typeError(t, "two operands should have non-void type");
-             else if (leftType == IntegerArray && rightType == IntegerArray)
-               typeError(t, "not both of operands can be array");
-             else if (op == MINUS && leftType == Integer && rightType == IntegerArray)
-               typeError(t, "invalid operands to binary expression");
-             else if ((op == TIMES || op == OVER) && (leftType == IntegerArray || rightType == IntegerArray))
-               typeError(t, "invalid operands to binary expression");
-             else t->type = Integer;*/
-           }
+         case OpK: {
            break;
-         case ConstK:
-          t->type = Integer;
-          break;
-         case IdK:
-          break;
-         case ArrIdK:
-           {
-             const char *symbolName = t->attr.name;
-             const BucketList bucket;
-             TreeNode *symbolDecl = NULL;
-
-             if (bucket == NULL) break;
-
-             if (t->kind.exp == ArrIdK) {
-               if (symbolDecl->kind.decl != ArrVarK && symbolDecl->kind.decl != ArrParamK) {
-                 typeError(t, "expected array symbol");
-               }
-               else if (t->child[0]->type != Integer) {
-                 typeError(t,"index expression should have integer type");
-               }
-               else t->type = Integer;
-             } else {
-               t->type = symbolDecl->type;
-             }
-           }
+         }
+         case ConstK: {
            break;
-         case CallK:
-           {
-             const char *callingFuncName = t->attr.name;
-             const TreeNode * funcDecl;
-             TreeNode *arg;
-             TreeNode *param;
-
-             if (funcDecl == NULL) break;
-
-             arg = t->child[0];
-             param = funcDecl->child[1];
-
-             if (funcDecl->kind.decl != FunK) {
-               typeError(t,"expected function symbol");
-               break;
-             }
-
-             while (arg != NULL) {
-               if (param == NULL) typeError(arg, "the number of parameters is wrong");
-               /* the number of arguments does not match to that of parameters */
-               /*else if (arg->type == IntegerArray &&
-                   param->type != IntegerArray)
-                 typeError(arg,"expected non-array value");
-               else if (arg->type == Integer &&
-                   param->type == IntegerArray)
-                 typeError(arg,"expected array value");*/
-               else if (arg->type == Void)
-                 typeError(arg, "void value cannot be passed as an argument");
-               else {  // no problem!
-                 arg = arg->sibling;
-                 param = param->sibling;
-                 continue;
-               }
-               /* any problem */
-               break;
-             }
-
-             if (arg == NULL && param != NULL)
-             /* the number of arguments does not match to
-                that of parameters */
-               typeError(t->child[0],"the number of parameters is wrong");
-               t->type = funcDecl->type;
-           }
+         }
+         case IdK: {
            break;
+         }
+         case ArrIdK: {
+           break;
+         }
+         case CallK: {
+           break;
+         }
          default:
            break;
        }
@@ -373,20 +334,21 @@ static void checkNode(TreeNode * t) {
 * by a postorder syntax tree traversal
 */
 void typeCheck(TreeNode * syntaxTree) {
-  // traverse(syntaxTree, nullProc, checkNode);
-  // popScope();
+  traverse(syntaxTree, nullProc, checkNode);
 }
 
 /* Function buildSymtab constructs the symbol
 * table by preorder traversal of the syntax tree
 */
 void buildSymtab(TreeNode * syntaxTree) {
+
   // insert global scope
   globalScope = newScope("global");
   pushScope(globalScope);
   insertInputFunc();
   insertOutputFunc();
   traverse(syntaxTree, insertNode, nullProc);
+  popScope();
   if (TraceAnalyze) {
     printSymTab(listing);
   }
