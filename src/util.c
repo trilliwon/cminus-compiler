@@ -128,12 +128,32 @@ static void printSpaces(void) {
 }
 
 /* printType print types of funcions and variables */
-static void printTypes(TreeNode* tree) {
+void printTypes(TreeNode* tree) {
   if (tree->child[0] != NULL) {
-    if (tree->child[0]->type == Integer) {
-      fprintf(listing,"int");
-    } else {
-      fprintf(listing,"void");
+    switch (tree->child[0]->type) {
+      case Integer:
+        fprintf(listing,"int");
+        break;
+      case Void:
+        fprintf(listing,"void");
+        break;
+      case IntegerArray:
+        fprintf(listing,"int array");
+        break;
+      default: return;
+    }
+  } else {
+    switch (tree->type) {
+      case Integer:
+        fprintf(listing,"int");
+        break;
+      case Void:
+        fprintf(listing,"void");
+        break;
+      case IntegerArray:
+        fprintf(listing,"int array");
+        break;
+      default: return;
     }
   }
 }
@@ -183,8 +203,6 @@ void printTree( TreeNode * tree )
           break;
         case IdK:
           fprintf(listing,"Id: %s\n",tree->attr.name);
-          break;
-        case TypeK:
           break;
         case ArrIdK:
           fprintf(listing,"ArrId \n");

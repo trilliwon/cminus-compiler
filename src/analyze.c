@@ -92,7 +92,7 @@ static void traverse(TreeNode * t, void (* preProc) (TreeNode *), void (* postPr
  * generate preorder-only or postorder-only
  * traversals from traverse
  */
-static void nullProc(TreeNode * t) {
+static void popAfterInsertProc(TreeNode * t) {
 
   if (t->nodekind == StmtK) {
     if (t->kind.stmt == CompoundK) {
@@ -101,6 +101,11 @@ static void nullProc(TreeNode * t) {
     }
   }
 
+  if (t==NULL) return;
+  else return;
+}
+
+static void nullProc(TreeNode * t) {
   if (t==NULL) return;
   else return;
 }
@@ -197,6 +202,7 @@ static void insertNode(TreeNode * t) {
             break;
           }
 
+          // Type Checing : Type should not be void
           if (t->child[0]->type == Void) {
             symbolError(t, "Variable should not be void type.");
             break;
@@ -208,6 +214,7 @@ static void insertNode(TreeNode * t) {
 
         case ArrVarK: {
 
+          // Type Checing : Type should not be void
           if (t->child[0]->type == Void) {
             symbolError(t, "Redefinition of Array variable");
             break;
@@ -225,6 +232,7 @@ static void insertNode(TreeNode * t) {
 
         case ArrParamK: {
 
+          // Type Checing : Type should not be void
           if (t->child[0]->type == Void) {
             symbolError(t, "Array Parameter should not be void type.");
             break;
@@ -305,21 +313,27 @@ static void checkNode(TreeNode * t) {
      case ExpK:
        switch (t->kind.exp) {
          case OpK: {
+           printToken(t->attr.op, "\0");
            break;
          }
-         case ConstK: {
+         case ConstK:
+           fprintf(listing,"Const: %d\n",t->attr.val);
            break;
-         }
-         case IdK: {
+         case IdK:
+           fprintf(listing,"Id: %s\n",t->attr.name);
            break;
-         }
-         case ArrIdK: {
+         case ArrIdK:
+           fprintf(listing,"ArrId \n");
            break;
-         }
-         case CallK: {
+         case CallK:
+           fprintf(listing, "Call Function : %s\n", t->attr.name);
            break;
-         }
+         case CalcK:
+           fprintf(listing, "CalcK : ");
+           printToken(t->child[1]->attr.op, "\0");
+           break;
          default:
+           fprintf(listing,"Unknown ExpNode kind\n");
            break;
        }
        break;
@@ -348,7 +362,7 @@ void buildSymtab(TreeNode * syntaxTree) {
   insertInputFunc();
   insertOutputFunc();
 
-  traverse(syntaxTree, insertNode, nullProc);
+  traverse(syntaxTree, insertNode, popAfterInsertProc);
   popScope();
   if (TraceAnalyze) {
     printSymTab(listing);

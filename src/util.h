@@ -6,6 +6,7 @@
  */
 void printToken(TokenType , const char* );
 
+void printTypes(TreeNode* tree);
 /* Function newStmtNode creates a new statement
  * node for syntax tree construction
  */
