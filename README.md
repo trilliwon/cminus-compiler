@@ -22,10 +22,10 @@
     - Input(), output()
   - [DOING] Modify symbol table generation
     - [DONE]  `buildSymtab()`
-    - [DOING] `insertNode()`
-    - [TODO]  `traverse()`
-    - [TODO]  scope and type concept
-  - [TODO] Modify the checkNode() function to check the semantics of C-Minus
+    - [DONE] `insertNode()`
+    - [DONE]  `traverse()`
+    - [DONE]  scope and type concept
+  - [DOING] Modify the checkNode() function to check the semantics of C-Minus
 
 ### [Original Code](http://www.cs.sjsu.edu/~louden/cmptext/)
 

@@ -125,10 +125,6 @@ static int locationCounter = 0;
  */
 static void insertNode(TreeNode * t) {
   switch (t->nodekind) {
-    /*
-    *
-    * OpK, ConstK, IdK, TypeK, ArrIdK, CallK, CalcK } ExpKind;
-    */
     case ExpK: {
       switch (t->kind.exp){
         case IdK:
@@ -136,7 +132,6 @@ static void insertNode(TreeNode * t) {
         case CallK: {
           // check undeclation
           if (st_lookup_all_scope(t->attr.name) == NULL){
-            fprintf(listing,"Symbol Table error  %s\n", t->attr.name);
             symbolError(t, "Undefined Symbol");
           } else {
             BucketList list = st_lookup_all_scope(t->attr.name);

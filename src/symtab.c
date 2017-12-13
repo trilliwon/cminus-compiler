@@ -59,14 +59,12 @@ Scope currScope() {
   return scopeStack[topScope-1];
 }
 
-void printSymTabRows(Scope scope);
 /* Procedure st_insert inserts line numbers and
  * memory locations into the symbol table
  * loc = memory location is inserted only the
  * first time, otherwise ignored
  */
 
-static int locations[SIZE];
 void st_insert( char * scopeName,
                 char * name,
                 ExpType type,
