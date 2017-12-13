@@ -97,7 +97,6 @@ static void popAfterInsertProc(TreeNode * t) {
   if (t->nodekind == StmtK) {
     if (t->kind.stmt == CompoundK) {
       popScope();
-      fprintf(listing, "}\n");
     }
   }
 
@@ -140,6 +139,8 @@ static void insertNode(TreeNode * t) {
             fprintf(listing,"Symbol Table error  %s\n", t->attr.name);
             symbolError(t, "Undefined Symbol");
           } else {
+            BucketList list = st_lookup_all_scope(t->attr.name);
+            t->type = list->type;
             insertLines(t->attr.name, t->lineno);
           }
         }
@@ -154,7 +155,6 @@ static void insertNode(TreeNode * t) {
     case StmtK: {
       switch (t->kind.stmt) {
         case CompoundK: {
-          fprintf(listing, "%s CompoundK {\n", currScope()->name);
           if (!isFirstCompoundK) {
             Scope scope = newScope(currScope()->name);
             scope->parent = currScope();
@@ -308,33 +308,6 @@ static void checkNode(TreeNode * t) {
         }
         default:
           break;
-       }
-       break;
-     case ExpK:
-       switch (t->kind.exp) {
-         case OpK: {
-           printToken(t->attr.op, "\0");
-           break;
-         }
-         case ConstK:
-           fprintf(listing,"Const: %d\n",t->attr.val);
-           break;
-         case IdK:
-           fprintf(listing,"Id: %s\n",t->attr.name);
-           break;
-         case ArrIdK:
-           fprintf(listing,"ArrId \n");
-           break;
-         case CallK:
-           fprintf(listing, "Call Function : %s\n", t->attr.name);
-           break;
-         case CalcK:
-           fprintf(listing, "CalcK : ");
-           printToken(t->child[1]->attr.op, "\0");
-           break;
-         default:
-           fprintf(listing,"Unknown ExpNode kind\n");
-           break;
        }
        break;
      default:

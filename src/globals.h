@@ -81,7 +81,7 @@ typedef struct treeNode {
    struct ScopeListRec * scope;
   } attr;
 
-  ExpType type; /* for type checking of exps */
+  ExpType type;
 } TreeNode;
 
 /**************************************************/

@@ -204,6 +204,7 @@ void printTree( TreeNode * tree )
         case IdK:
           fprintf(listing,"Id: %s\n",tree->attr.name);
           break;
+        case TypeK: break;
         case ArrIdK:
           fprintf(listing,"ArrId \n");
           break;
