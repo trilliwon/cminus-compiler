@@ -97,6 +97,7 @@ static void nullProc(TreeNode * t) {
   if (t->nodekind == StmtK) {
     if (t->kind.stmt == CompoundK) {
       popScope();
+      fprintf(listing, "}\n");
     }
   }
 
@@ -121,26 +122,6 @@ static int locationCounter = 0;
 static void insertNode(TreeNode * t) {
   switch (t->nodekind) {
     /*
-     * Statement Key
-     */
-    case StmtK: {
-      switch (t->kind.stmt) {
-        case CompoundK: {
-          if (!isFirstCompoundK) {
-            Scope scope = newScope(currScope()->name);
-            scope->parent = currScope();
-            pushScope(scope);
-          }
-          isFirstCompoundK = false;
-          break;
-        }
-        default:
-          break;
-      }
-      break;
-    }
-
-    /*
     *
     * OpK, ConstK, IdK, TypeK, ArrIdK, CallK, CalcK } ExpKind;
     */
@@ -162,7 +143,26 @@ static void insertNode(TreeNode * t) {
       }
       break;
     }
-
+    /*
+     * Statement Key
+     */
+    case StmtK: {
+      switch (t->kind.stmt) {
+        case CompoundK: {
+          fprintf(listing, "%s CompoundK {\n", currScope()->name);
+          if (!isFirstCompoundK) {
+            Scope scope = newScope(currScope()->name);
+            scope->parent = currScope();
+            pushScope(scope);
+          }
+          isFirstCompoundK = false;
+          break;
+        }
+        default:
+          break;
+      }
+      break;
+    }
     /*
      * Declaration Key
      */
@@ -326,9 +326,7 @@ static void checkNode(TreeNode * t) {
      default:
        break;
    }
- }
-
-
+}
 
 /* Procedure typeCheck performs type checking
 * by a postorder syntax tree traversal
@@ -342,11 +340,14 @@ void typeCheck(TreeNode * syntaxTree) {
 */
 void buildSymtab(TreeNode * syntaxTree) {
 
-  // insert global scope
+
   globalScope = newScope("global");
+  // push global scope
   pushScope(globalScope);
+
   insertInputFunc();
   insertOutputFunc();
+
   traverse(syntaxTree, insertNode, nullProc);
   popScope();
   if (TraceAnalyze) {
