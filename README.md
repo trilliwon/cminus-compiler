@@ -1,8 +1,8 @@
 # cminus-compiler
 
 1. Scanner
-    - Implementation Lexer
-    - Using Lexer
+    - Implementation Of Lexer
+    - Using [flex](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator))
 2. Parser
     - just using yacc
 3. Semantic analyzer
