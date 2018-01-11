@@ -10,22 +10,18 @@
   - Implementation of Type Checker
 
 
-# TODO Semantic Analysis
+# Semantic Analysis
 >
 - main.c
-  - [DONE] Modify NO_ANALYZE, TraceParse, and TraceAnalyze to suit your assignment
+  - [x] Modify NO_ANALYZE, TraceParse, and TraceAnalyze to suit your assignment
 - `symtab.h` `symtab.c`
-  - [DONE] Add scope and type to symbol table
-  - [DONE] Implement hash table
+  - [x] Add scope and type to symbol table
+  - [x] Implement hash table
 - analyze.c
-  - [DONE] Insert built-in function
+  - [x] Insert built-in function
     - Input(), output()
-  - [DOING] Modify symbol table generation
-    - [DONE]  `buildSymtab()`
-    - [DONE] `insertNode()`
-    - [DONE]  `traverse()`
-    - [DONE]  scope and type concept
-  - [DOING] Modify the checkNode() function to check the semantics of C-Minus
+  - [x] Modify symbol table generation
+  - [ ] Modify the checkNode() function to check the semantics of C-Minus
 
 ### [Original Code](http://www.cs.sjsu.edu/~louden/cmptext/)
 
