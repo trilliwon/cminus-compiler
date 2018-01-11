@@ -1,17 +1,17 @@
 # cminus-compiler
 
 1. Scanner
-  - Implementation Lexer
-  - Using Lexer
+    - Implementation Lexer
+    - Using Lexer
 2. Parser
-  - just using yacc
+    - just using yacc
 3. Semantic analyzer
-  - Implementation of Symbol Table
-  - Implementation of Type Checker
+    - Implementation of Symbol Table
+    - Implementation of Type Checker
 
 
 # Semantic Analysis
->
+
 - main.c
   - [x] Modify NO_ANALYZE, TraceParse, and TraceAnalyze to suit your assignment
 - `symtab.h` `symtab.c`
