@@ -30,5 +30,5 @@
 
 ```
 $ make
-$ ./cminus gcd.cm
+$ ./compiler gcd.cm
 ```
